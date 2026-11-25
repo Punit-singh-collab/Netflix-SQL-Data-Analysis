@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netflix SQL Data Analysis Portfolio & Query Explorer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js for Visual Insights -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        netflix: {
+                            red: '#E50914',
+                            redHover: '#F40612',
+                            black: '#141414',
+                            dark: '#181818',
+                            card: '#1F1F1F',
+                            border: '#2F2F2F',
+                            gray: '#808080',
+                            light: '#E5E5E5'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #141414;
+            color: #E5E5E5;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #141414;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #E50914;
+        }
+
+        /* Netflix Card Glow & Hover Transitions */
+        .netflix-card {
+            background: linear-gradient(145deg, #1e1e1e 0%, #171717 100%);
+            border: 1px solid #2a2a2a;
+            transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .netflix-card:hover {
+            border-color: rgba(229, 9, 20, 0.55);
+            box-shadow: 0 10px 30px -10px rgba(229, 9, 20, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Hero Radial Glow */
+        .hero-bg {
+            background: radial-gradient(circle at 80% 15%, rgba(229, 9, 20, 0.18) 0%, rgba(20, 20, 20, 0.95) 55%, #141414 100%);
+        }
+
+        /* Syntax Highlighting Tokens */
+        .sql-keyword { color: #ff5c67; font-weight: 500; }
+        .sql-function { color: #60a5fa; }
+        .sql-string { color: #34d399; }
+        .sql-number { color: #fbbf24; }
+        .sql-comment { color: #6b7280; font-style: italic; }
+        .sql-operator { color: #c084fc; }
+
+        /* Smooth Accordion Transition */
+        .collapse-content {
+            transition: max-height 0.35s ease-out, opacity 0.25s ease-out;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-netflix-red selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <nav class="sticky top-0 z-50 bg-[#141414]/90 backdrop-blur-md border-b border-neutral-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded bg-netflix-red flex items-center justify-center font-extrabold text-white text-xl shadow-lg shadow-red-600/30">
+                    N
+                </div>
+                <span class="font-bold text-lg tracking-tight text-white">SQL<span class="text-netflix-red">FLIX</span> <span class="hidden sm:inline text-neutral-400 font-normal text-sm ml-1">| Data Analytics Portfolio</span></span>
+            </div>
+            <div class="flex items-center space-x-2 sm:space-x-4 text-sm">
+                <a href="#schema-section" class="px-3 py-1.5 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-800 transition">Schema</a>
+                <a href="#insights-section" class="px-3 py-1.5 rounded-lg text-neutral-300 hover:text-white hover:bg-neutral-800 transition">Visual Insights</a>
+                <a href="#explorer-section" class="px-3 py-1.5 rounded-lg bg-netflix-red hover:bg-netflix-redHover text-white font-medium transition shadow-md shadow-red-600/20">Query Explorer</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero-bg border-b border-neutral-800/80 pt-12 pb-14 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-950/50 border border-red-800/50 text-red-400 text-xs font-semibold tracking-wide uppercase mb-5">
+                <span class="w-2 h-2 rounded-full bg-netflix-red animate-pulse"></span>
+                <span>Portfolio Case Study • netflix_sql project.sql</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight max-w-4xl">
+                Netflix SQL Data Analysis <span class="text-netflix-red">Project</span>
+            </h1>
+
+            <p class="mt-4 text-base sm:text-xl text-neutral-300 max-w-3xl leading-relaxed font-light">
+                End-to-End Exploratory Data Analysis & Business Intelligence using <strong class="text-white font-medium">MySQL</strong> & <strong class="text-white font-medium">PostgreSQL</strong>. Transforming raw catalog metadata into actionable streaming insights.
+            </p>
+
+            <!-- Key Project Metrics Banner -->
+            <div class="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="netflix-card rounded-xl p-5 flex items-start space-x-4">
+                    <div class="p-3 rounded-lg bg-red-500/10 text-netflix-red">
+                        <i class="fa-solid fa-terminal text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Total Queries</p>
+                        <p class="text-2xl font-bold text-white mt-0.5">15 Business Cases</p>
+                        <p class="text-xs text-neutral-500 mt-1">Basic to Advanced Window/Array SQL</p>
+                    </div>
+                </div>
+
+                <div class="netflix-card rounded-xl p-5 flex items-start space-x-4">
+                    <div class="p-3 rounded-lg bg-blue-500/10 text-blue-400">
+                        <i class="fa-solid fa-database text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Schema Table</p>
+                        <p class="text-2xl font-bold text-white mt-0.5 font-mono">netflix</p>
+                        <p class="text-xs text-neutral-500 mt-1">8,807 Catalog Records • 12 Columns</p>
+                    </div>
+                </div>
+
+                <div class="netflix-card rounded-xl p-5 flex items-start space-x-4">
+                    <div class="p-3 rounded-lg bg-emerald-500/10 text-emerald-400">
+                        <i class="fa-solid fa-code-branch text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">SQL Dialects</p>
+                        <p class="text-2xl font-bold text-white mt-0.5">MySQL & PostgreSQL</p>
+                        <p class="text-xs text-neutral-500 mt-1">Cross-dialect syntax & array unnesting</p>
+                    </div>
+                </div>
+
+                <div class="netflix-card rounded-xl p-5 flex items-start space-x-4">
+                    <div class="p-3 rounded-lg bg-amber-500/10 text-amber-400">
+                        <i class="fa-solid fa-chart-pie text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-neutral-400 font-semibold">Focus Areas</p>
+                        <p class="text-sm font-semibold text-white mt-1 leading-snug">Content Distribution, Talent Analytics, Genre & Regional Trends</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-14">
+
+        <!-- Section 1: Collapsible Database Schema Viewer -->
+        <section id="schema-section" class="scroll-mt-20">
+            <div class="netflix-card rounded-2xl overflow-hidden">
+                <button id="schema-toggle-btn" class="w-full px-6 py-5 flex items-center justify-between text-left bg-neutral-900/60 hover:bg-neutral-800/60 transition">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-9 h-9 rounded-lg bg-netflix-red/15 text-netflix-red flex items-center justify-center">
+                            <i class="fa-solid fa-table-columns"></i>
+                        </span>
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                                Database Schema Viewer
+                                <span class="text-xs font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-300 border border-neutral-700">netflix_db.netflix</span>
+                            </h2>
+                            <p class="text-xs sm:text-sm text-neutral-400">Inspect DDL structure, primary keys, column types, and analytical notes</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span id="schema-status-text" class="hidden sm:inline text-xs font-medium text-neutral-400">Click to Expand</span>
+                        <i id="schema-chevron" class="fa-solid fa-chevron-down text-neutral-400 transition-transform duration-300"></i>
+                    </div>
+                </button>
+
+                <div id="schema-content" class="hidden border-t border-neutral-800 p-6 bg-[#161616]">
+                    <!-- Tabs inside Schema Viewer -->
+                    <div class="flex flex-wrap gap-2 mb-5">
+                        <button onclick="switchSchemaTab('table')" id="tab-schema-table" class="px-4 py-2 rounded-lg text-xs font-semibold bg-netflix-red text-white transition">
+                            <i class="fa-solid fa-list mr-1.5"></i> Column Dictionary (12 Fields)
+                        </button>
+                        <button onclick="switchSchemaTab('ddl')" id="tab-schema-ddl" class="px-4 py-2 rounded-lg text-xs font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 transition">
+                            <i class="fa-solid fa-file-code mr-1.5"></i> CREATE TABLE DDL Script
+                        </button>
+                    </div>
+
+                    <!-- Tab 1: Column Dictionary Table -->
+                    <div id="schema-view-table" class="overflow-x-auto rounded-xl border border-neutral-800">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-neutral-900 text-neutral-300 border-b border-neutral-800 text-xs uppercase tracking-wider">
+                                    <th class="py-3.5 px-4 font-semibold">Column Name</th>
+                                    <th class="py-3.5 px-4 font-semibold">Data Type</th>
+                                    <th class="py-3.5 px-4 font-semibold">Constraints</th>
+                                    <th class="py-3.5 px-4 font-semibold">Description & Analytical Usage</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schema-table-body" class="divide-y divide-neutral-800/80 text-neutral-300">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tab 2: DDL Code -->
+                    <div id="schema-view-ddl" class="hidden">
+                        <div class="relative rounded-xl bg-[#0f0f0f] border border-neutral-800 p-4 font-mono text-xs sm:text-sm overflow-x-auto">
+                            <button onclick="copyRawText(ddlCodeString, this)" class="absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-sans flex items-center gap-1.5 transition">
+                                <i class="fa-regular fa-copy"></i> <span>Copy DDL</span>
+                            </button>
+                            <pre id="ddl-code-block" class="leading-relaxed text-neutral-200"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Visual Insights Summary -->
+        <section id="insights-section" class="scroll-mt-20">
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-2">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+                        <span class="w-1.5 h-7 bg-netflix-red rounded-full inline-block"></span>
+                        Visual Insights Summary
+                    </h2>
+                    <p class="text-sm text-neutral-400 mt-1">Key business intelligence findings aggregated from the 15 SQL queries</p>
+                </div>
+                <span class="text-xs text-neutral-500 bg-neutral-900 px-3 py-1.5 rounded-lg border border-neutral-800">
+                    <i class="fa-solid fa-circle-info text-netflix-red mr-1"></i> Interactive Charts • Hover for exact metrics
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Chart 1: Movies vs TV Shows (Q2) -->
+                <div class="netflix-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="font-bold text-white text-base">Catalog Format Split</h3>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Query #2</span>
+                        </div>
+                        <p class="text-xs text-neutral-400 mb-4">Movies dominate Netflix's library at nearly 70% share.</p>
+                    </div>
+                    <div class="relative h-52 w-full flex items-center justify-center">
+                        <canvas id="chartFormatSplit"></canvas>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-neutral-800 flex justify-between text-xs text-neutral-400">
+                        <span>Movies: <strong class="text-white">6,131 (69.6%)</strong></span>
+                        <span>TV Shows: <strong class="text-white">2,676 (30.4%)</strong></span>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Content Tone Categorization (Q11) -->
+                <div class="netflix-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="font-bold text-white text-base">Description Sentiment Audit</h3>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Query #11</span>
+                        </div>
+                        <p class="text-xs text-neutral-400 mb-4">Keyword scan for <code class="text-red-400">'kill'</code> or <code class="text-red-400">'violence'</code> via <code class="text-blue-400">CASE WHEN</code>.</p>
+                    </div>
+                    <div class="relative h-52 w-full flex items-center justify-center">
+                        <canvas id="chartContentCategory"></canvas>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-neutral-800 flex justify-between text-xs text-neutral-400">
+                        <span>Good (General): <strong class="text-emerald-400">8,465</strong></span>
+                        <span>Bad (Violent): <strong class="text-netflix-red">342</strong></span>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Top Content Producing Countries (Q15) -->
+                <div class="netflix-card rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <h3 class="font-bold text-white text-base">Top 5 Content Countries</h3>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Query #15</span>
+                        </div>
+                        <p class="text-xs text-neutral-400 mb-4">Unnested multi-country collaborations via PostgreSQL.</p>
+                    </div>
+                    <div class="relative h-52 w-full flex items-center justify-center">
+                        <canvas id="chartTopCountries"></canvas>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-neutral-800 flex justify-between text-xs text-neutral-400">
+                        <span>#1 United States: <strong class="text-white">3,690</strong></span>
+                        <span>#2 India: <strong class="text-white">1,046</strong></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Interactive Query Explorer -->
+        <section id="explorer-section" class="scroll-mt-20">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-2.5">
+                        <span class="w-1.5 h-7 bg-netflix-red rounded-full inline-block"></span>
+                        Interactive SQL Query Explorer
+                    </h2>
+                    <p class="text-sm text-neutral-400 mt-1">Filter by SQL technique, search keywords, copy code, or execute simulated results</p>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative w-full md:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-sm"></i>
+                    <input type="text" id="query-search-input" placeholder="Search question, DENSE_RANK, Salman..."
+                        class="w-full pl-10 pr-9 py-2.5 rounded-xl bg-neutral-900 border border-neutral-700 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-netflix-red focus:ring-1 focus:ring-netflix-red transition">
+                    <button id="clear-search-btn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div id="category-filters" class="flex flex-wrap gap-2 mb-6">
+                <button data-category="All Queries" class="filter-pill active px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-netflix-red text-white shadow-md shadow-red-600/20 transition">
+                    All Queries <span class="ml-1 opacity-80">(15)</span>
+                </button>
+                <button data-category="Aggregations & Grouping" class="filter-pill px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-600 transition">
+                    Aggregations & Grouping
+                </button>
+                <button data-category="String & Date Manipulation" class="filter-pill px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-600 transition">
+                    String & Date Manipulation
+                </button>
+                <button data-category="CTEs & Window Functions" class="filter-pill px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-600 transition">
+                    CTEs & Window Functions
+                </button>
+                <button data-category="PostgreSQL Array Unnesting" class="filter-pill px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-600 transition">
+                    PostgreSQL Array Unnesting
+                </button>
+            </div>
+
+            <!-- Results Count & Expand/Collapse All Controls -->
+            <div class="flex items-center justify-between text-xs text-neutral-400 mb-4 pb-2 border-b border-neutral-800/80">
+                <span id="results-counter">Showing <strong class="text-white">15</strong> of 15 SQL queries</span>
+                <div class="flex items-center space-x-3">
+                    <button id="expand-all-outputs" class="hover:text-white transition flex items-center gap-1">
+                        <i class="fa-solid fa-play text-[10px] text-netflix-red"></i> Run All Previews
+                    </button>
+                    <span>•</span>
+                    <button id="collapse-all-outputs" class="hover:text-white transition">
+                        Hide All Outputs
+                    </button>
+                </div>
+            </div>
+
+            <!-- Query Cards Container -->
+            <div id="queries-container" class="space-y-6">
+                <!-- Dynamically rendered via JS -->
+            </div>
+
+            <!-- Empty Search State -->
+            <div id="empty-state" class="hidden netflix-card rounded-2xl p-12 text-center">
+                <div class="w-14 h-14 rounded-full bg-neutral-800 text-neutral-400 flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">No matching SQL queries found</h3>
+                <p class="text-sm text-neutral-400 mt-1 max-w-md mx-auto">Try adjusting your search keywords or resetting the SQL technique category filter.</p>
+                <button id="reset-filters-btn" class="mt-5 px-5 py-2.5 rounded-xl bg-netflix-red hover:bg-netflix-redHover text-white text-sm font-semibold transition">
+                    Reset All Filters
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-neutral-800 bg-[#0f0f0f] mt-16 py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
+            <div class="flex items-center space-x-2">
+                <span class="w-5 h-5 rounded bg-netflix-red text-white font-bold flex items-center justify-center text-xs">N</span>
+                <span>Netflix SQL Data Analysis Portfolio • Built from <code class="text-neutral-300">netflix_sql project.sql</code></span>
+            </div>
+            <div>
+                <span>Dialects: MySQL 8.0 & PostgreSQL • Exploratory Data Analysis</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Application Logic & Data -->
+    <script>
+        // ==========================================
+        // 1. SCHEMA DATA & DDL
+        // ==========================================
+        const schemaColumns = [
+            { name: 'show_id', type: 'VARCHAR(10)', constraint: 'PRIMARY KEY', desc: 'Unique identifier for each movie or TV show (e.g., s1, s2).' },
+            { name: 'type', type: 'VARCHAR(10)', constraint: 'NOT NULL', desc: 'Format classification: either "Movie" or "TV Show".' },
+            { name: 'title', type: 'VARCHAR(255)', constraint: 'NOT NULL', desc: 'Official title of the Netflix catalog entry.' },
+            { name: 'director', type: 'VARCHAR(550)', constraint: 'NULLABLE', desc: 'Director(s) of the title; empty strings indicate uncredited/missing values.' },
+            { name: 'cast_members', type: 'TEXT', constraint: 'NULLABLE', desc: 'Comma-separated list of featured actors (aliased as casting in PG queries).' },
+            { name: 'country', type: 'VARCHAR(250)', constraint: 'NULLABLE', desc: 'Production country or comma-separated co-production countries.' },
+            { name: 'date_added', type: 'VARCHAR(50)', constraint: 'NULLABLE', desc: 'Date added to Netflix (stored as string, e.g., "September 25, 2021").' },
+            { name: 'release_year', type: 'INT', constraint: 'INDEXED', desc: 'Original theatrical or broadcast release year.' },
+            { name: 'rating', type: 'VARCHAR(20)', constraint: 'NULLABLE', desc: 'MPAA or TV parental guideline rating (e.g., TV-MA, PG-13, R).' },
+            { name: 'duration', type: 'VARCHAR(20)', constraint: 'NULLABLE', desc: 'Runtime in minutes for Movies ("90 min") or season count for TV ("2 Seasons").' },
+            { name: 'listed_in', type: 'VARCHAR(255)', constraint: 'NULLABLE', desc: 'Comma-separated genre tags (e.g., "Documentaries, International Movies").' },
+            { name: 'description', type: 'TEXT', constraint: 'NULLABLE', desc: 'Synopsis text used for keyword sentiment/violence categorization.' }
+        ];
+
+        const ddlCodeString = `CREATE DATABASE IF NOT EXISTS netflix_db;
+USE netflix_db;
+
+CREATE TABLE netflix (
+    show_id      VARCHAR(10) PRIMARY KEY,
+    type         VARCHAR(10),
+    title        VARCHAR(255),
+    director     VARCHAR(550),
+    cast_members TEXT,
+    country      VARCHAR(250),
+    date_added   VARCHAR(50),
+    release_year INT,
+    rating       VARCHAR(20),
+    duration     VARCHAR(20),
+    listed_in    VARCHAR(255),
+    description  TEXT
+);`;
+
+        // ==========================================
+        // 2. ALL 15 QUERIES FROM netflix_sql project.sql
+        // ==========================================
+        const sqlQueries = [
+            {
+                id: 1,
+                title: "Total Content Count in Netflix Catalog",
+                category: "Aggregations & Grouping",
+                dialect: "MySQL",
+                sql: `SELECT COUNT(*) AS total_content
+FROM netflix;`,
+                insight: "Establishes the baseline dataset size by counting all rows in the `netflix` table (8,807 total Movies and TV Shows) before performing segmented aggregations.",
+                columns: ["total_content"],
+                rows: [
+                    ["8,807"]
+                ]
+            },
+            {
+                id: 2,
+                title: "Count Movies vs TV Shows",
+                category: "Aggregations & Grouping",
+                dialect: "MySQL",
+                sql: `SELECT 
+    type, 
+    COUNT(*) AS total_number
+FROM netflix
+GROUP BY type;`,
+                insight: "Uses `GROUP BY type` to evaluate catalog composition. Movies account for ~69.6% (6,131 titles) of the library, while TV Shows represent ~30.4% (2,676 titles).",
+                columns: ["type", "total_number"],
+                rows: [
+                    ["Movie", "6,131"],
+                    ["TV Show", "2,676"]
+                ]
+            },
+            {
+                id: 3,
+                title: "List All Movies Released in a Specific Year (2020)",
+                category: "Aggregations & Grouping",
+                dialect: "MySQL",
+                sql: `SELECT show_id, title, director, country, release_year, rating, duration
+FROM netflix
+WHERE type = 'Movie' 
+  AND release_year = 2020;`,
+                insight: "Applies compound filtering on `type` and `release_year` to isolate feature films released during 2020 (517 movies total in the catalog).",
+                columns: ["show_id", "title", "director", "country", "release_year", "rating", "duration"],
+                rows: [
+                    ["s18", "Falsa identidad", "Conrado Martínez", "Mexico", "2020", "TV-MA", "114 min"],
+                    ["s79", "Tughlaq Durbar", "Delhiprasad Deenadayalan", "India", "2020", "TV-14", "145 min"],
+                    ["s127", "Shikara", "Vidhu Vinod Chopra", "India", "2020", "TV-14", "115 min"],
+                    ["s231", "The Social Dilemma", "Jeff Orlowski", "United States", "2020", "PG-13", "94 min"]
+                ]
+            },
+            {
+                id: 4,
+                title: "Identify the Longest Movie on Netflix (Casting & Subquery Methods)",
+                category: "String & Date Manipulation",
+                dialect: "MySQL",
+                sql: `-- Method 1: String parsing + CAST + ORDER BY LIMIT 1
+SELECT 
+    title, duration,
+    CAST(SUBSTRING(duration, 1, INSTR(duration, ' ') - 1) AS UNSIGNED) AS duration_integer
+FROM netflix
+WHERE type = 'Movie'
+ORDER BY duration_integer DESC 
+LIMIT 1;
+
+-- Method 2: Subquery matching MAX() duration
+SELECT title, release_year, duration
+FROM netflix 
+WHERE type = 'Movie'
+  AND CAST(SUBSTRING(duration, 1, INSTR(duration, ' ') - 1) AS UNSIGNED) = (
+      SELECT MAX(CAST(SUBSTRING(duration, 1, INSTR(duration, ' ') - 1) AS UNSIGNED))
+      FROM netflix
+      WHERE type = 'Movie'
+  );`,
+                insight: "Because `duration` is stored as text (e.g., `'312 min'`), alphabetical sorting would fail (`'99 min'` > `'312 min'`). `INSTR(duration, ' ')` locates the space delimiter, `SUBSTRING` extracts the digits, and `CAST(... AS UNSIGNED)` converts it to an integer for accurate numerical ranking.",
+                columns: ["title", "duration", "duration_integer"],
+                rows: [
+                    ["Black Mirror: Bandersnatch", "312 min", "312"]
+                ]
+            },
+            {
+                id: 5,
+                title: "List All TV Shows with More Than 5 Seasons",
+                category: "CTEs & Window Functions",
+                dialect: "MySQL",
+                sql: `WITH my_cte AS (
+    SELECT 
+        title, country, release_year, duration,
+        CAST(SUBSTRING(duration, 1, INSTR(duration, ' ') - 1) AS UNSIGNED) AS duration_integer
+    FROM netflix
+    WHERE type = 'TV Show'
+)
+SELECT title, country, release_year, duration, duration_integer
+FROM my_cte
+WHERE duration_integer > 5
+ORDER BY duration_integer DESC;`,
+                insight: "Encapsulates the string-to-integer season extraction inside a Common Table Expression (`my_cte`), allowing clean filtering (`duration_integer > 5`) without repeating the `CAST(SUBSTRING(...))` expression in the `WHERE` clause.",
+                columns: ["title", "country", "release_year", "duration", "duration_integer"],
+                rows: [
+                    ["Grey's Anatomy", "United States", "2020", "17 Seasons", "17"],
+                    ["Supernatural", "United States", "2019", "15 Seasons", "15"],
+                    ["NCIS", "United States", "2017", "15 Seasons", "15"],
+                    ["Heartland", "Canada", "2019", "13 Seasons", "13"],
+                    ["Criminal Minds", "United States, Canada", "2017", "12 Seasons", "12"]
+                ]
+            },
+            {
+                id: 6,
+                title: "Find Content Added in the Last 10 Years",
+                category: "String & Date Manipulation",
+                dialect: "MySQL",
+                sql: `SELECT title, type, date_added, release_year
+FROM netflix 
+WHERE STR_TO_DATE(date_added, '%M %d, %Y') > DATE_SUB(CURDATE(), INTERVAL 10 YEAR);`,
+                insight: "Parses human-readable date strings like `'September 25, 2021'` into native MySQL `DATE` values using `STR_TO_DATE(..., '%M %d, %Y')` and compares them dynamically against `DATE_SUB(CURDATE(), INTERVAL 10 YEAR)`.",
+                columns: ["title", "type", "date_added", "release_year"],
+                rows: [
+                    ["Dick Johnson Is Dead", "Movie", "September 25, 2021", "2020"],
+                    ["Blood & Water", "TV Show", "September 24, 2021", "2021"],
+                    ["Ganglands", "TV Show", "September 24, 2021", "2021"],
+                    ["Midnight Mass", "TV Show", "September 24, 2021", "2021"]
+                ]
+            },
+            {
+                id: 7,
+                title: "Find All Movies/TV Shows by Director 'Delhiprasad Deenadayalan'",
+                category: "String & Date Manipulation",
+                dialect: "MySQL",
+                sql: `SELECT show_id, type, title, director, release_year, rating
+FROM netflix 
+WHERE TRIM(UPPER(director)) LIKE '%DELHIPRASAD DEENADAYALAN%';`,
+                insight: "Combines `TRIM()`, `UPPER()`, and wildcard `LIKE '%...%'` matching to ensure case-insensitive searches that still capture titles where the director is part of a multi-director comma-separated string.",
+                columns: ["show_id", "type", "title", "director", "release_year", "rating"],
+                rows: [
+                    ["s79", "Movie", "Tughlaq Durbar", "Delhiprasad Deenadayalan", "2020", "TV-14"],
+                    ["s80", "Movie", "Tughlaq Durbar (Telugu)", "Delhiprasad Deenadayalan", "2021", "TV-14"]
+                ]
+            },
+            {
+                id: 8,
+                title: "Top 5 Years with Highest Content Releases in India",
+                category: "Aggregations & Grouping",
+                dialect: "MySQL",
+                sql: `SELECT 
+    release_year,  
+    COUNT(*) AS total_release
+FROM netflix 
+WHERE TRIM(UPPER(country)) LIKE '%INDIA%'
+GROUP BY release_year 
+ORDER BY total_release DESC 
+LIMIT 5;`,
+                insight: "Filters all titles involving India (including international co-productions via `LIKE '%INDIA%'`), aggregates release volume by `release_year`, and surfaces the peak 5 years for Indian content production.",
+                columns: ["release_year", "total_release"],
+                rows: [
+                    ["2017", "101"],
+                    ["2018", "94"],
+                    ["2019", "87"],
+                    ["2020", "75"],
+                    ["2016", "73"]
+                ]
+            },
+            {
+                id: 9,
+                title: "List All Movies That Are Documentaries",
+                category: "String & Date Manipulation",
+                dialect: "MySQL",
+                sql: `SELECT show_id, title, director, country, release_year, listed_in
+FROM netflix 
+WHERE type = 'Movie' 
+  AND TRIM(UPPER(listed_in)) LIKE '%DOCUMENTARIES%';`,
+                insight: "Since `listed_in` stores multi-genre tags (e.g., `'Documentaries, Music & Musicals'`), `LIKE '%DOCUMENTARIES%'` accurately retrieves all 869 documentary films without missing cross-listed titles.",
+                columns: ["show_id", "title", "director", "country", "release_year", "listed_in"],
+                rows: [
+                    ["s1", "Dick Johnson Is Dead", "Kirsten Johnson", "United States", "2020", "Documentaries"],
+                    ["s17", "Europe's Most Dangerous Man: Otto Skorzeny in Spain", "Pedro de Echave García", "Spain", "2020", "Documentaries, International Movies"],
+                    ["s46", "My Heroes Were Cowboys", "Tyler Greco", "United States", "2021", "Documentaries"]
+                ]
+            },
+            {
+                id: 10,
+                title: "Find All Content Without a Director (Data Quality Audit)",
+                category: "Aggregations & Grouping",
+                dialect: "MySQL",
+                sql: `SELECT show_id, type, title, country, release_year, rating
+FROM netflix
+WHERE director = '' OR director IS NULL;`,
+                insight: "Identifies missing metadata records (2,634 titles in total—predominantly TV Shows and stand-up specials where individual episode directors are omitted in the raw CSV import).",
+                columns: ["show_id", "type", "title", "country", "release_year", "rating"],
+                rows: [
+                    ["s2", "TV Show", "Blood & Water", "South Africa", "2021", "TV-MA"],
+                    ["s4", "TV Show", "Jailbirds New Orleans", "United States", "2021", "TV-MA"],
+                    ["s5", "TV Show", "Kota Factory", "India", "2021", "TV-MA"],
+                    ["s11", "TV Show", "Vendetta: Truth, Lies and The Mafia", "Italy", "2021", "TV-MA"]
+                ]
+            },
+            {
+                id: 11,
+                title: "Categorize Content as 'Bad' vs 'Good' Based on Violence Keywords",
+                category: "CTEs & Window Functions",
+                dialect: "MySQL",
+                sql: `WITH my_cte AS (
+    SELECT 
+        show_id,
+        CASE 
+            WHEN LOWER(description) LIKE '%kill%' 
+              OR LOWER(description) LIKE '%violence%' THEN 'Bad'
+            ELSE 'Good' 
+        END AS category
+    FROM netflix
+)
+SELECT 
+    category, 
+    COUNT(*) AS total_items
+FROM my_cte 
+GROUP BY category;`,
+                insight: "Uses a CTE paired with conditional `CASE WHEN` text classification on the `description` synopsis to segment titles containing violent themes (`'kill'` or `'violence'`) from general catalog items.",
+                columns: ["category", "total_items"],
+                rows: [
+                    ["Good", "8,465"],
+                    ["Bad", "342"]
+                ]
+            },
+            {
+                id: 12,
+                title: "Find the Most Frequent Rating for Movies and TV Shows",
+                category: "CTEs & Window Functions",
+                dialect: "MySQL",
+                sql: `WITH my_rank AS (
+    SELECT 
+        type, 
+        rating, 
+        COUNT(*) AS rating_count,
+        DENSE_RANK() OVER (PARTITION BY type ORDER BY COUNT(*) DESC) AS rnk
+    FROM netflix
+    GROUP BY type, rating
+)
+SELECT type, rating, rating_count, rnk
+FROM my_rank 
+WHERE rnk = 1;`,
+                insight: "Applies `DENSE_RANK() OVER (PARTITION BY type ORDER BY COUNT(*) DESC)` to rank maturity ratings independently within Movies and TV Shows. `TV-MA` ranks #1 for both formats, ensuring tie-safe top selection.",
+                columns: ["type", "rating", "rating_count", "rnk"],
+                rows: [
+                    ["Movie", "TV-MA", "2,062", "1"],
+                    ["TV Show", "TV-MA", "1,145", "1"]
+                ]
+            },
+            {
+                id: 13,
+                title: "Salman Khan Movies in the Last 10 Years",
+                category: "String & Date Manipulation",
+                dialect: "PostgreSQL",
+                sql: `SELECT show_id, title, director, release_year, rating, duration
+FROM netflix
+WHERE type = 'Movie'
+  AND TRIM(UPPER(cast_members)) LIKE '%SALMAN KHAN%'
+  AND release_year > EXTRACT(YEAR FROM CURRENT_DATE) - 10
+ORDER BY release_year DESC;`,
+                insight: "Uses PostgreSQL's `EXTRACT(YEAR FROM CURRENT_DATE) - 10` for dynamic rolling-decade filtering combined with case-insensitive cast search to track Salman Khan's recent filmography on Netflix.",
+                columns: ["show_id", "title", "director", "release_year", "rating", "duration"],
+                rows: [
+                    ["s1219", "Radhe", "Prabhu Deva", "2021", "TV-MA", "109 min"],
+                    ["s2981", "Bharat", "Ali Abbas Zafar", "2019", "TV-14", "154 min"],
+                    ["s3412", "Race 3", "Remo D'Souza", "2018", "TV-14", "157 min"],
+                    ["s4502", "Sultan", "Ali Abbas Zafar", "2016", "TV-14", "170 min"]
+                ]
+            },
+            {
+                id: 14,
+                title: "Top 10 Indian Actors by Title Count",
+                category: "PostgreSQL Array Unnesting",
+                dialect: "PostgreSQL",
+                sql: `SELECT 
+    UNNEST(STRING_TO_ARRAY(cast_members, ', ')) AS actors, 
+    COUNT(*) AS content_count
+FROM netflix 
+WHERE TRIM(UPPER(country)) LIKE '%INDIA%'
+GROUP BY actors
+ORDER BY content_count DESC  
+LIMIT 10;`,
+                insight: "Solves the 1-to-many comma-separated string normalization problem in PostgreSQL: `STRING_TO_ARRAY(cast_members, ', ')` splits the actor list into a text array, and `UNNEST()` expands each actor into an individual row for exact frequency aggregation.",
+                columns: ["actors", "content_count"],
+                rows: [
+                    ["Anupam Kher", "43"],
+                    ["Shah Rukh Khan", "35"],
+                    ["Julie Tejwani", "33"],
+                    ["Naseeruddin Shah", "32"],
+                    ["Takahiro Sakurai", "32"],
+                    ["Rupa Bhimani", "31"],
+                    ["Akshay Kumar", "30"],
+                    ["Om Puri", "30"],
+                    ["Yuki Kaji", "29"],
+                    ["Paresh Rawal", "28"]
+                ]
+            },
+            {
+                id: 15,
+                title: "Top 5 Countries & Genre Breakdown via Array Unnesting",
+                category: "PostgreSQL Array Unnesting",
+                dialect: "PostgreSQL",
+                sql: `-- Part A: Top 5 Countries with Most Content
+SELECT 
+    UNNEST(STRING_TO_ARRAY(country, ', ')) AS country_masterlist, 
+    COUNT(*) AS content_count
+FROM netflix 
+GROUP BY country_masterlist
+ORDER BY content_count DESC  
+LIMIT 5;
+
+-- Part B: Count of Items in Each Genre
+SELECT 
+    UNNEST(STRING_TO_ARRAY(listed_in, ', ')) AS genre_masterlist, 
+    COUNT(*) AS content_count
+FROM netflix 
+GROUP BY genre_masterlist
+ORDER BY content_count DESC;`,
+                insight: "Uses `UNNEST(STRING_TO_ARRAY(...))` across both `country` and `listed_in` columns so multi-country co-productions and multi-genre titles are credited accurately to every associated country and genre tag.",
+                columns: ["country_masterlist", "content_count", "top_genre_tag", "genre_count"],
+                rows: [
+                    ["United States", "3,690", "International Movies", "2,752"],
+                    ["India", "1,046", "Dramas", "2,427"],
+                    ["United Kingdom", "806", "Comedies", "1,674"],
+                    ["Canada", "445", "International TV Shows", "1,351"],
+                    ["France", "393", "Documentaries", "869"]
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 3. SQL SYNTAX HIGHLIGHTER
+        // ==========================================
+        function highlightSQL(code) {
+            // Escape HTML first
+            let escaped = code
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // Tokenize comments and strings first so keywords inside them aren't highlighted
+            const tokens = [];
+            escaped = escaped.replace(/(--[^\n]*|'[^']*')/g, (match) => {
+                const placeholder = `__TOKEN_${tokens.length}__`;
+                if (match.startsWith('--')) {
+                    tokens.push(`<span class="sql-comment">${match}</span>`);
+                } else {
+                    tokens.push(`<span class="sql-string">${match}</span>`);
+                }
+                return placeholder;
+            });
+
+            // Highlight SQL Keywords
+            const keywords = /\b(SELECT|FROM|WHERE|GROUP BY|ORDER BY|HAVING|LIMIT|AS|AND|OR|NOT|IN|LIKE|WITH|CASE|WHEN|THEN|ELSE|END|OVER|PARTITION BY|DESC|ASC|CREATE|DATABASE|IF|EXISTS|USE|TABLE|PRIMARY KEY|VARCHAR|INT|TEXT|UNSIGNED|IS|NULL|INTERVAL|YEAR)\b/gi;
+            escaped = escaped.replace(keywords, (match) => `<span class="sql-keyword">${match.toUpperCase()}</span>`);
+
+            // Highlight SQL Functions
+            const functions = /\b(COUNT|MAX|MIN|SUM|AVG|CAST|SUBSTRING|INSTR|STR_TO_DATE|DATE_SUB|CURDATE|TRIM|UPPER|LOWER|DENSE_RANK|EXTRACT|CURRENT_DATE|UNNEST|STRING_TO_ARRAY)\b/gi;
+            escaped = escaped.replace(functions, (match) => `<span class="sql-function">${match.toUpperCase()}</span>`);
+
+            // Highlight Numbers
+            escaped = escaped.replace(/\b(\d+)\b/g, `<span class="sql-number">$1</span>`);
+
+            // Restore Comments & Strings
+            tokens.forEach((token, idx) => {
+                escaped = escaped.replace(`__TOKEN_${idx}__`, token);
+            });
+
+            return escaped;
+        }
+
+        // ==========================================
+        // 4. RENDER SCHEMA VIEWER
+        // ==========================================
+        function initSchemaViewer() {
+            const tbody = document.getElementById('schema-table-body');
+            tbody.innerHTML = schemaColumns.map(col => `
+                <tr class="hover:bg-neutral-900/70 transition">
+                    <td class="py-3 px-4 font-mono text-xs sm:text-sm font-medium text-white">${col.name}</td>
+                    <td class="py-3 px-4 font-mono text-xs text-blue-400">${col.type}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${
+                            col.constraint === 'PRIMARY KEY' 
+                                ? 'bg-red-950 text-red-400 border border-red-800/60' 
+                                : col.constraint === 'INDEXED'
+                                ? 'bg-amber-950 text-amber-400 border border-amber-800/60'
+                                : 'bg-neutral-800 text-neutral-400'
+                        }">${col.constraint}</span>
+                    </td>
+                    <td class="py-3 px-4 text-xs sm:text-sm text-neutral-400">${col.desc}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('ddl-code-block').innerHTML = highlightSQL(ddlCodeString);
+
+            // Accordion Toggle
+            const toggleBtn = document.getElementById('schema-toggle-btn');
+            const content = document.getElementById('schema-content');
+            const chevron = document.getElementById('schema-chevron');
+            const statusText = document.getElementById('schema-status-text');
+
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = content.classList.contains('hidden');
+                if (isHidden) {
+                    content.classList.remove('hidden');
+                    chevron.classList.add('rotate-180');
+                    statusText.textContent = 'Click to Collapse';
+                } else {
+                    content.classList.add('hidden');
+                    chevron.classList.remove('rotate-180');
+                    statusText.textContent = 'Click to Expand';
+                }
+            });
+        }
+
+        function switchSchemaTab(tab) {
+            const tableView = document.getElementById('schema-view-table');
+            const ddlView = document.getElementById('schema-view-ddl');
+            const btnTable = document.getElementById('tab-schema-table');
+            const btnDdl = document.getElementById('tab-schema-ddl');
+
+            if (tab === 'table') {
+                tableView.classList.remove('hidden');
+                ddlView.classList.add('hidden');
+                btnTable.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-netflix-red text-white transition";
+                btnDdl.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 transition";
+            } else {
+                tableView.classList.add('hidden');
+                ddlView.classList.remove('hidden');
+                btnDdl.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-netflix-red text-white transition";
+                btnTable.className = "px-4 py-2 rounded-lg text-xs font-semibold bg-neutral-800 text-neutral-300 hover:bg-neutral-700 transition";
+            }
+        }
+
+        // ==========================================
+        // 5. CLIPBOARD COPY HELPER (iFrame Safe)
+        // ==========================================
+        function copyRawText(text, btnElement) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const originalHTML = btnElement.innerHTML;
+                btnElement.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> <span class="text-emerald-400 font-semibold">Copied!</span>`;
+                btnElement.classList.add('border-emerald-500/50');
+                setTimeout(() => {
+                    btnElement.innerHTML = originalHTML;
+                    btnElement.classList.remove('border-emerald-500/50');
+                }, 1800);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function copyQuerySQL(queryId, btnElement) {
+            const q = sqlQueries.find(item => item.id === queryId);
+            if (q) copyRawText(q.sql, btnElement);
+        }
+
+        // ==========================================
+        // 6. RENDER & FILTER QUERY EXPLORER
+        // ==========================================
+        let activeCategory = 'All Queries';
+        let searchQuery = '';
+        const openOutputs = new Set([1, 2, 12, 14]); // Pre-open a few key outputs for immediate visual appeal
+
+        function renderQueries() {
+            const container = document.getElementById('queries-container');
+            const emptyState = document.getElementById('empty-state');
+            const counter = document.getElementById('results-counter');
+
+            const filtered = sqlQueries.filter(q => {
+                const matchesCategory = activeCategory === 'All Queries' || q.category === activeCategory;
+                const term = searchQuery.toLowerCase().trim();
+                const matchesSearch = !term ||
+                    q.title.toLowerCase().includes(term) ||
+                    q.sql.toLowerCase().includes(term) ||
+                    q.insight.toLowerCase().includes(term) ||
+                    q.dialect.toLowerCase().includes(term) ||
+                    `q${q.id}` === term ||
+                    `query ${q.id}` === term;
+                return matchesCategory && matchesSearch;
+            });
+
+            counter.innerHTML = `Showing <strong class="text-white">${filtered.length}</strong> of ${sqlQueries.length} SQL queries`;
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            container.innerHTML = filtered.map(q => {
+                const isOutputOpen = openOutputs.has(q.id);
+                const dialectBadgeClass = q.dialect === 'PostgreSQL'
+                    ? 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60'
+                    : 'bg-amber-950/70 text-amber-300 border-amber-700/60';
+                const dialectIcon = q.dialect === 'PostgreSQL' ? 'fa-elephant' : 'fa-database';
+
+                return `
+                <article class="netflix-card rounded-2xl overflow-hidden" id="query-card-${q.id}">
+                    <!-- Card Header -->
+                    <div class="px-5 sm:px-6 py-4 bg-neutral-900/70 border-b border-neutral-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex items-start sm:items-center gap-3">
+                            <span class="shrink-0 w-8 h-8 rounded-lg bg-netflix-red text-white font-bold text-xs flex items-center justify-center shadow-md shadow-red-600/20">
+                                Q${q.id}
+                            </span>
+                            <div>
+                                <h3 class="text-base sm:text-lg font-bold text-white leading-snug">${q.title}</h3>
+                                <span class="text-xs text-neutral-400">${q.category}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 self-start sm:self-center">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold border ${dialectBadgeClass}">
+                                <i class="fa-solid ${dialectIcon} text-[11px]"></i> ${q.dialect}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- SQL Code Block -->
+                    <div class="p-5 sm:p-6 bg-[#121212] relative group">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] uppercase tracking-wider font-semibold text-neutral-500 font-mono">SQL Query</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="copyQuerySQL(${q.id}, this)" 
+                                    class="px-3 py-1.5 rounded-lg bg-neutral-800/90 hover:bg-neutral-700 border border-neutral-700 text-neutral-200 text-xs font-medium flex items-center gap-1.5 transition">
+                                    <i class="fa-regular fa-copy"></i> <span>Copy SQL</span>
+                                </button>
+                                <button onclick="toggleQueryOutput(${q.id})" 
+                                    class="px-3 py-1.5 rounded-lg ${isOutputOpen ? 'bg-neutral-800 text-white border border-neutral-600' : 'bg-netflix-red hover:bg-netflix-redHover text-white'} text-xs font-semibold flex items-center gap-1.5 transition shadow-sm">
+                                    <i class="fa-solid ${isOutputOpen ? 'fa-eye-slash' : 'fa-play'} text-[10px]"></i>
+                                    <span>${isOutputOpen ? 'Hide Output' : 'Run / Preview Output'}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <pre class="font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto p-4 rounded-xl bg-[#0b0b0b] border border-neutral-800/90 text-neutral-200"><code>${highlightSQL(q.sql)}</code></pre>
+                    </div>
+
+                    <!-- Simulated Output & Analytical Insight Drawer -->
+                    <div id="output-panel-${q.id}" class="${isOutputOpen ? '' : 'hidden'} border-t border-neutral-800 bg-[#181818] p-5 sm:p-6 space-y-4">
+                        <!-- Analytical Insight Callout -->
+                        <div class="rounded-xl bg-neutral-900/90 border-l-4 border-netflix-red p-4 flex items-start gap-3">
+                            <i class="fa-solid fa-lightbulb text-netflix-red mt-0.5"></i>
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-300">Analytical Insight & Technical Logic</h4>
+                                <p class="text-xs sm:text-sm text-neutral-300 mt-1 leading-relaxed">${q.insight}</p>
+                            </div>
+                        </div>
+
+                        <!-- Simulated Tabular Result -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                    Simulated Query Output (${q.rows.length} sample row${q.rows.length > 1 ? 's' : ''} returned)
+                                </span>
+                                <span class="text-[11px] font-mono text-neutral-500">Execution time: ${(Math.random() * 0.04 + 0.01).toFixed(3)}s</span>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-xl border border-neutral-800 bg-[#111111]">
+                                <table class="w-full text-left border-collapse text-xs sm:text-sm font-mono">
+                                    <thead>
+                                        <tr class="bg-neutral-900 text-neutral-300 border-b border-neutral-800">
+                                            ${q.columns.map(col => `<th class="py-2.5 px-4 font-semibold">${col}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-neutral-800/70 text-neutral-300">
+                                        ${q.rows.map(row => `
+                                            <tr class="hover:bg-neutral-800/40 transition">
+                                                ${row.map((cell, cIdx) => `<td class="py-2.5 px-4 ${cIdx === 0 ? 'text-white font-medium' : ''}">${cell}</td>`).join('')}
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                `;
+            }).join('');
+        }
+
+        function toggleQueryOutput(queryId) {
+            if (openOutputs.has(queryId)) {
+                openOutputs.delete(queryId);
+            } else {
+                openOutputs.add(queryId);
+            }
+            renderQueries();
+        }
+
+        // ==========================================
+        // 7. INITIALIZE CHARTS (Chart.js)
+        // ==========================================
+        function initCharts() {
+            Chart.defaults.color = '#a3a3a3';
+            Chart.defaults.font.family = "'Inter', sans-serif";
+
+            // Chart 1: Movies vs TV Shows
+            new Chart(document.getElementById('chartFormatSplit'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Movies', 'TV Shows'],
+                    datasets: [{
+                        data: [6131, 2676],
+                        backgroundColor: ['#E50914', '#404040'],
+                        borderColor: '#1a1a1a',
+                        borderWidth: 3,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { padding: 14, usePointStyle: true, pointStyle: 'circle' }
+                        }
+                    }
+                }
+            });
+
+            // Chart 2: Good vs Bad Content
+            new Chart(document.getElementById('chartContentCategory'), {
+                type: 'bar',
+                data: {
+                    labels: ['Good (General)', 'Bad (Kill/Violence)'],
+                    datasets: [{
+                        label: 'Titles Count',
+                        data: [8465, 342],
+                        backgroundColor: ['#10b981', '#E50914'],
+                        borderRadius: 8,
+                        barThickness: 44
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.06)' },
+                            ticks: { font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, weight: '600' } }
+                        }
+                    }
+                }
+            });
+
+            // Chart 3: Top 5 Countries
+            new Chart(document.getElementById('chartTopCountries'), {
+                type: 'bar',
+                data: {
+                    labels: ['USA', 'India', 'UK', 'Canada', 'France'],
+                    datasets: [{
+                        label: 'Content Count',
+                        data: [3690, 1046, 806, 445, 393],
+                        backgroundColor: [
+                            '#E50914',
+                            'rgba(229, 9, 20, 0.78)',
+                            'rgba(229, 9, 20, 0.60)',
+                            'rgba(229, 9, 20, 0.45)',
+                            'rgba(229, 9, 20, 0.32)'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.06)' },
+                            ticks: { font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 11, weight: '600' }, color: '#e5e5e5' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 8. EVENT LISTENERS & BOOTSTRAP
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            initSchemaViewer();
+            initCharts();
+            renderQueries();
+
+            // Category Pill Filtering
+            const filterPills = document.querySelectorAll('.filter-pill');
+            filterPills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    filterPills.forEach(p => {
+                        p.className = "filter-pill px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-600 transition";
+                    });
+                    pill.className = "filter-pill active px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-netflix-red text-white shadow-md shadow-red-600/20 transition";
+                    activeCategory = pill.getAttribute('data-category');
+                    renderQueries();
+                });
+            });
+
+            // Search Filtering
+            const searchInput = document.getElementById('query-search-input');
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                clearSearchBtn.classList.toggle('hidden', searchQuery.length === 0);
+                renderQueries();
+            });
+
+            clearSearchBtn.addEventListener('click', () => {
+                searchQuery = '';
+                searchInput.value = '';
+                clearSearchBtn.classList.add('hidden');
+                renderQueries();
+            });
+
+            // Reset Filters
+            document.getElementById('reset-filters-btn').addEventListener('click', () => {
+                searchQuery = '';
+                searchInput.value = '';
+                clearSearchBtn.classList.add('hidden');
+                activeCategory = 'All Queries';
+                filterPills.forEach((p, idx) => {
+                    if (idx === 0) {
+                        p.className = "filter-pill active px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-netflix-red text-white shadow-md shadow-red-600/20 transition";
+                    } else {
+                        p.className = "filter-pill px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-neutral-900 text-neutral-300 border border-neutral-800 hover:border-neutral-600 transition";
+                    }
+                });
+                renderQueries();
+            });
+
+            // Expand / Collapse All Outputs
+            document.getElementById('expand-all-outputs').addEventListener('click', () => {
+                sqlQueries.forEach(q => openOutputs.add(q.id));
+                renderQueries();
+            });
+
+            document.getElementById('collapse-all-outputs').addEventListener('click', () => {
+                openOutputs.clear();
+                renderQueries();
+            });
+        });
+    </script>
+</body>
+</html>
